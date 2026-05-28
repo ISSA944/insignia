@@ -34,7 +34,7 @@ export default function Navbar() {
           onClick={(e) => handleLink(e, "#home")}
           className="group transition-opacity hover:opacity-75 active:scale-95 transition-transform"
         >
-          <ISOLogo size={34} />
+          <ISOLogo size={44} />
         </a>
 
         {/* Desktop links */}

@@ -1,21 +1,25 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { X, Sparkles, Send, ChevronDown, RotateCcw } from "lucide-react";
+import ISOLogo from "./ISOLogo";
+
+const GEMINI_KEY = import.meta.env.VITE_GEMINI_KEY ?? "";
 
 /* ── Gemini API ──────────────────────────────────────────────────────────── */
 async function gemini(
-  key: string,
   history: { role: "user" | "model"; text: string }[],
   msg: string
 ): Promise<string> {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         system_instruction: {
           parts: [{
-            text: "You are a world-class math and finance AI assistant in the ISO financial calculator. Solve equations, explain concepts, help with compound interest, APY calculations, portfolio math, DeFi yields. Be concise and clear. No markdown headers—use plain text with line breaks."
+            text: `You are an AI assistant embedded in the ISO financial app. ISO is a DeFi startup building USD ISO — a reward-earning stablecoin pegged 1:1 to the US dollar. Users earn 8.5% APY from automated DeFi yield strategies while keeping their money liquid and dollar-pegged. Compare: traditional banks offer ~0.45% APY while inflation runs ~2.4%, meaning savers lose real purchasing power. USD ISO beats inflation and grows wealth passively.
+
+You also serve as a world-class math and finance assistant: solve equations, explain compound interest, APY calculations, portfolio math, DeFi yields, stablecoin mechanics. Answer questions about ISO's product clearly. Be concise. No markdown headers — use plain text with line breaks.`
           }]
         },
         contents: [
@@ -93,8 +97,6 @@ export default function Calculator({ onClose }: { onClose: () => void }) {
   const [shift, setShift]       = useState(false);
 
   const [tab, setTab]           = useState<"calc" | "ai">("calc");
-  const [apiKey, setApiKey]     = useState(() => localStorage.getItem("iso_gkey") ?? "");
-  const [draft, setDraft]       = useState("");
   const [chat, setChat]         = useState<Msg[]>([{
     role: "ai",
     text: "Hi! I'm your AI math & finance assistant powered by Gemini.\n\nAsk me to: solve equations, explain compound interest, calculate APY, help with DeFi math, or anything quantitative. I can also see your current expression if you ask.",
@@ -243,7 +245,7 @@ export default function Calculator({ onClose }: { onClose: () => void }) {
     try {
       const h = chat.slice(-12).filter(m => m.role !== "ai" || !m.text.startsWith("Hi! I'm your AI"))
         .map(m => ({ role: (m.role === "user" ? "user" : "model") as "user" | "model", text: m.text }));
-      const a = await gemini(apiKey, h, q + ctx);
+      const a = await gemini(h, q + ctx);
       setChat(c => [...c, { role: "ai", text: a }]);
     } catch (e: any) {
       setChat(c => [...c, { role: "ai", text: `⚠️ ${e.message}` }]);
@@ -279,7 +281,7 @@ export default function Calculator({ onClose }: { onClose: () => void }) {
         {/* ── Top bar ── */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.06] shrink-0">
           <div className="flex items-center gap-3">
-            <img src="/iso-logo.png" className="h-7 w-auto object-contain rounded-sm" alt="ISO" />
+            <ISOLogo size={28} />
             <div className="hidden sm:block">
               <div className="text-white/90 text-sm font-medium leading-none" style={{ letterSpacing: "-0.02em" }}>Calculator</div>
               <div className="text-white/25 text-[10px] mt-0.5 tracking-wide">SCIENTIFIC · AI</div>
@@ -403,58 +405,7 @@ export default function Calculator({ onClose }: { onClose: () => void }) {
           <div className={`flex flex-col flex-1 min-w-0
             ${tab === "ai" ? "flex" : "hidden"} lg:flex`}
           >
-            {!apiKey ? (
-              /* API key setup */
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
-                  style={{
-                    background: "rgba(13,148,136,0.1)",
-                    border: "1px solid rgba(13,148,136,0.2)",
-                    boxShadow: "0 0 40px rgba(13,148,136,0.08)",
-                  }}
-                >
-                  <Sparkles className="w-7 h-7 text-teal-400" />
-                </div>
-                <h3 className="text-white text-lg font-medium mb-2" style={{ letterSpacing: "-0.025em" }}>
-                  Connect Gemini AI
-                </h3>
-                <p className="text-white/40 text-sm leading-relaxed max-w-[260px] mb-6">
-                  Get your free API key at{" "}
-                  <span className="text-teal-400 font-medium">aistudio.google.com</span>
-                  {" "}→ "Get API key" → it's free.
-                </p>
-                <div className="w-full max-w-[300px] space-y-2.5">
-                  <input
-                    type="password"
-                    placeholder="Paste your key: AIza..."
-                    value={draft}
-                    onChange={e => setDraft(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === "Enter" && draft.length > 10) {
-                        localStorage.setItem("iso_gkey", draft);
-                        setApiKey(draft);
-                      }
-                    }}
-                    className="w-full bg-white/[0.05] border border-white/[0.10] rounded-xl px-4 py-3 text-white text-sm placeholder-white/20 outline-none focus:border-teal-500/40 font-mono tracking-wide"
-                    autoComplete="off"
-                  />
-                  <button
-                    onClick={() => {
-                      if (draft.length > 10) {
-                        localStorage.setItem("iso_gkey", draft);
-                        setApiKey(draft);
-                      }
-                    }}
-                    disabled={draft.length < 10}
-                    className="w-full py-3 rounded-xl bg-[#0d9488] hover:bg-[#0f766e] disabled:opacity-30 text-white font-medium text-sm transition-all active:scale-95"
-                  >
-                    Connect →
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
+            <>
                 {/* Chat messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
                   {chat.map((m, i) => (
@@ -526,15 +477,8 @@ export default function Calculator({ onClose }: { onClose: () => void }) {
                       <Send className="w-4 h-4 text-white" />
                     </button>
                   </div>
-                  <button
-                    onClick={() => { localStorage.removeItem("iso_gkey"); setApiKey(""); setDraft(""); }}
-                    className="mt-2 text-white/15 hover:text-white/35 text-[10px] transition-colors"
-                  >
-                    Change API key
-                  </button>
                 </div>
-              </>
-            )}
+            </>
           </div>
         </div>
       </div>

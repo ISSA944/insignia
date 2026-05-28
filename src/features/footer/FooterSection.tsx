@@ -72,7 +72,7 @@ export default function FooterSection() {
               onClick={() => scrollTo("#home")}
               className="mb-4 hover:opacity-75 transition-opacity active:scale-95 inline-block"
             >
-              <ISOLogo size={30} />
+              <ISOLogo size={36} />
             </button>
             <p className="text-black/40 text-sm leading-relaxed">
               The reward-powered digital dollar for the next era of finance.
