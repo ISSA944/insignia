@@ -9,8 +9,10 @@ const SP500_APY = 0.105;
 
 const LS_KEY = "iso_gemini_key";
 
+const ENV_KEY = import.meta.env.VITE_GEMINI_KEY ?? "";
+
 function getStoredKey(): string {
-  return localStorage.getItem(LS_KEY) ?? "";
+  return localStorage.getItem(LS_KEY) || ENV_KEY;
 }
 
 async function gemini(history: { role: "user" | "model"; text: string }[], msg: string, apiKey: string): Promise<string> {
