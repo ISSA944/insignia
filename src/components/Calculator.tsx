@@ -2,15 +2,20 @@ import { useState, useRef, useEffect } from "react";
 import { X, Sparkles, ArrowLeftRight, BarChart3, Coins, TrendingUp, ArrowUp } from "lucide-react";
 import ISOLogo from "./ISOLogo";
 
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_KEY ?? "";
 const ISO_APY   = 0.085;
 const BANK_APY  = 0.0045;
 const BONDS_APY = 0.045;
 const SP500_APY = 0.105;
 
-async function gemini(history: { role: "user" | "model"; text: string }[], msg: string): Promise<string> {
+const LS_KEY = "iso_gemini_key";
+
+function getStoredKey(): string {
+  return localStorage.getItem(LS_KEY) ?? "";
+}
+
+async function gemini(history: { role: "user" | "model"; text: string }[], msg: string, apiKey: string): Promise<string> {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -61,6 +66,8 @@ export default function Calculator({ onClose }: { onClose: () => void }) {
   const [barsVisible, setBarsVisible]   = useState(false);
   const [mounted, setMounted]   = useState(false);
 
+  const [apiKey, setApiKey]   = useState(getStoredKey);
+  const [keyDraft, setKeyDraft] = useState("");
   const [chat, setChat]       = useState<Msg[]>([{ role: "ai", text: "Hi! I'm your ISO AI assistant powered by Gemini. Ask me anything about USD ISO, DeFi yields, compound interest, or portfolio math." }]);
   const [chatQ, setChatQ]     = useState("");
   const [thinking, setThinking] = useState(false);
@@ -95,10 +102,17 @@ export default function Calculator({ onClose }: { onClose: () => void }) {
     setThinking(true);
     try {
       const h = chat.slice(-10).map(m => ({ role: (m.role === "user" ? "user" : "model") as "user" | "model", text: m.text }));
-      const a = await gemini(h, q + `\n[Context: $${amount.toLocaleString()} USD ISO, ${period.label} horizon]`);
+      const a = await gemini(h, q + `\n[Context: $${amount.toLocaleString()} USD ISO, ${period.label} horizon]`, apiKey);
       setChat(c => [...c, { role: "ai", text: a }]);
     } catch (e: any) {
-      setChat(c => [...c, { role: "ai", text: `⚠️ ${e.message}` }]);
+      const msg: string = e.message ?? "";
+      const retryMatch = msg.match(/retry in ([\d.]+)s/i);
+      const friendly = msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")
+        ? `⏱ Free tier quota exceeded. Please wait ${retryMatch ? Math.ceil(Number(retryMatch[1])) + "s" : "a moment"} and try again, or use a key with higher limits.`
+        : msg.includes("API_KEY_INVALID") || msg.includes("400")
+        ? `🔑 Invalid API key. Click "Change key" below and enter a valid key from aistudio.google.com`
+        : `⚠️ ${msg}`;
+      setChat(c => [...c, { role: "ai", text: friendly }]);
     } finally { setThinking(false); }
   };
 
@@ -445,7 +459,42 @@ export default function Calculator({ onClose }: { onClose: () => void }) {
           )}
 
           {/* ══ AI ══ */}
-          {tab === "ai" && (
+          {tab === "ai" && !apiKey && (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
+                style={{ background: "rgba(13,148,136,0.08)", border: "1.5px solid rgba(13,148,136,0.2)" }}>
+                <Sparkles className="w-6 h-6" style={{ color: "#0d9488" }} />
+              </div>
+              <h3 className="text-black font-bold text-lg mb-2" style={{ letterSpacing: "-0.02em" }}>Connect Gemini AI</h3>
+              <p className="text-black/45 text-sm leading-relaxed max-w-[280px] mb-1">
+                Get your free key at{" "}
+                <span className="font-semibold" style={{ color: "#0d9488" }}>aistudio.google.com</span>
+              </p>
+              <p className="text-black/30 text-xs mb-6">Click "Get API key" → Create → Copy (starts with AIza...)</p>
+              <div className="w-full max-w-[320px] space-y-2">
+                <input
+                  type="password"
+                  placeholder="AIzaSy..."
+                  value={keyDraft}
+                  onChange={e => setKeyDraft(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter" && keyDraft.length > 10) { localStorage.setItem(LS_KEY, keyDraft); setApiKey(keyDraft); } }}
+                  className="w-full rounded-xl px-4 py-3 text-sm text-black placeholder-black/25 outline-none font-mono"
+                  style={{ background: "#F5F5F5", border: "1px solid rgba(0,0,0,0.1)" }}
+                  autoComplete="off"
+                />
+                <button
+                  onClick={() => { if (keyDraft.length > 10) { localStorage.setItem(LS_KEY, keyDraft); setApiKey(keyDraft); } }}
+                  disabled={keyDraft.length < 10}
+                  className="w-full py-3 rounded-xl text-white text-sm font-bold transition-all active:scale-95 disabled:opacity-30"
+                  style={{ background: "black" }}
+                >
+                  Connect →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {tab === "ai" && !!apiKey && (
             <>
               <div className="flex-1 overflow-y-auto p-5 space-y-3 min-h-0">
                 {chat.map((m, i) => (
@@ -505,6 +554,12 @@ export default function Calculator({ onClose }: { onClose: () => void }) {
                     <ArrowUp className="w-4 h-4 text-white" />
                   </button>
                 </div>
+                <button
+                  onClick={() => { localStorage.removeItem(LS_KEY); setApiKey(""); setKeyDraft(""); }}
+                  className="mt-2 text-black/25 hover:text-black/50 text-[10px] transition-colors"
+                >
+                  Change API key
+                </button>
               </div>
             </>
           )}
