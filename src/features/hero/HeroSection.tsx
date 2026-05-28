@@ -85,10 +85,32 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-gradient-to-t from-white/10 via-transparent to-transparent pointer-events-none" />
 
         <div className="relative z-10 flex flex-col items-start justify-start h-full p-7 sm:p-12 pt-28 sm:pt-36">
-          <div className="animate-fade-up" style={{ animationDelay: "0ms" }}>
+
+          {/* APY badge */}
+          <div
+            className="animate-fade-up mb-5"
+            style={{ animationDelay: "0ms" }}
+          >
+            <div
+              className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 backdrop-blur-sm"
+              style={{
+                background: "rgba(13,148,136,0.12)",
+                border: "1px solid rgba(13,148,136,0.25)",
+                boxShadow: "0 0 20px rgba(13,148,136,0.1)",
+              }}
+            >
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ background: "#4ade80", boxShadow: "0 0 6px #4ade80", animation: "glow-pulse 2s ease-in-out infinite" }}
+              />
+              <span className="text-black/80 text-xs font-semibold tracking-wide">8.5% APY · USD-pegged · DeFi-powered</span>
+            </div>
+          </div>
+
+          <div className="animate-fade-up" style={{ animationDelay: "60ms" }}>
             <h1
-              className="text-black text-5xl sm:text-6xl md:text-7xl font-medium leading-none max-w-xl mb-4"
-              style={{ letterSpacing: "-0.04em" }}
+              className="text-black font-medium leading-none max-w-2xl mb-4"
+              style={{ letterSpacing: "-0.04em", fontSize: "clamp(44px,6vw,88px)" }}
             >
               Your Wealth
               <br />
@@ -96,16 +118,14 @@ export default function HeroSection() {
             </h1>
           </div>
 
-          <div className="animate-fade-up" style={{ animationDelay: "80ms" }}>
-            <p
-              className="text-black/65 text-sm sm:text-base max-w-xs sm:max-w-md mb-8 leading-relaxed"
-            >
+          <div className="animate-fade-up" style={{ animationDelay: "140ms" }}>
+            <p className="text-black/60 text-sm sm:text-base max-w-xs sm:max-w-md mb-8 leading-relaxed">
               An automated, reward-powered digital dollar built for native passive
               earnings and effortless connection into DeFi.
             </p>
           </div>
 
-          <div className="animate-fade-up" style={{ animationDelay: "160ms" }}>
+          <div className="animate-fade-up flex items-center gap-3" style={{ animationDelay: "220ms" }}>
             <GlassEffect className="rounded-full">
               <button
                 onClick={scrollToSimulator}
