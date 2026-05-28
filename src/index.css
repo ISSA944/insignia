@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "TT Norms Pro";
+  src: url("/fonts/tt-norms-pro-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "TT Norms Pro";
+  src: url("/fonts/tt-norms-pro-semibold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+html,
+body {
+  font-family: "TT Norms Pro", ui-sans-serif, system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  width: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
+
+/* ── Marquees ── */
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes backers-marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ── Preloader ── */
+@keyframes moveBackground {
+  from { background-position: 0% 0%; }
+  to   { background-position: 0% -1000%; }
+}
+
+/* ── Fire flicker ── */
+@keyframes fire-flicker {
+  0%, 100% {
+    transform: scaleY(1) translateY(0px);
+    filter: drop-shadow(0 0 6px rgba(255, 200, 80, 0));
+  }
+  20% {
+    transform: scaleY(1.04) translateY(-2px);
+    filter: drop-shadow(0 0 14px rgba(255, 210, 100, 0.55));
+  }
+  45% {
+    transform: scaleY(0.97) translateY(1px);
+    filter: drop-shadow(0 0 8px rgba(255, 180, 60, 0.3));
+  }
+  70% {
+    transform: scaleY(1.03) translateY(-1px);
+    filter: drop-shadow(0 0 18px rgba(255, 220, 120, 0.6));
+  }
+}
+
+/* ── Glow pulse ── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0px rgba(255, 255, 255, 0); }
+  50%       { box-shadow: 0 0 40px rgba(255, 255, 255, 0.2), 0 0 80px rgba(255, 255, 255, 0.08); }
+}
+
+/* ── Float ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
+}
+
+/* ── Shimmer text ── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ── Fade up ── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Scale in ── */
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Slow spin ── */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Green pulse ── */
+@keyframes green-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+  50%       { box-shadow: 0 0 20px 4px rgba(74, 222, 128, 0.18); }
+}
+
+/* ── Red pulse ── */
+@keyframes red-pulse {
+  0%, 100% { text-shadow: 0 0 0px rgba(248, 113, 113, 0); }
+  50%       { text-shadow: 0 0 24px rgba(248, 113, 113, 0.5), 0 0 48px rgba(248, 113, 113, 0.2); }
+}
+
+/* ── Particle rise ── */
+@keyframes particle-rise {
+  0%   { transform: translateY(0) scale(1);   opacity: 0.6; }
+  100% { transform: translateY(-120px) scale(0.3); opacity: 0; }
+}
+
+/* ── Utility classes ── */
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 22s linear infinite;
+}
+
+.backers-track {
+  display: flex;
+  width: max-content;
+  animation: backers-marquee 30s linear infinite;
+}
+
+.animate-float   { animation: float 4s ease-in-out infinite; }
+.animate-fire    { animation: fire-flicker 2.8s ease-in-out infinite; }
+.animate-glow    { animation: glow-pulse 3s ease-in-out infinite; }
+.animate-fade-up { animation: fade-up 0.6s ease-out both; }
+.animate-scale-in { animation: scale-in 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+/* ── AI chat thinking dots ── */
+@keyframes bounce-dot {
+  0%, 100% { transform: translateY(0);   opacity: 0.4; }
+  50%       { transform: translateY(-4px); opacity: 1; }
+}
+
+/* ── Progress bar shimmer ── */
+@keyframes shimmer-bar {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
