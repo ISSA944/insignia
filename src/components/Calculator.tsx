@@ -73,6 +73,7 @@ export default function Calculator({ onClose }: { onClose: () => void }) {
   const [chat, setChat]       = useState<Msg[]>([{ role: "ai", text: "Hi! I'm your ISO AI assistant powered by Gemini. Ask me anything about USD ISO, DeFi yields, compound interest, or portfolio math." }]);
   const [chatQ, setChatQ]     = useState("");
   const [thinking, setThinking] = useState(false);
+  const [retryIn, setRetryIn]  = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { requestAnimationFrame(() => setMounted(true)); }, []);
@@ -102,20 +103,48 @@ export default function Calculator({ onClose }: { onClose: () => void }) {
     const q = chatQ.trim(); setChatQ("");
     setChat(c => [...c, { role: "user", text: q }]);
     setThinking(true);
+
+    const h = chat.slice(-10).map(m => ({ role: (m.role === "user" ? "user" : "model") as "user" | "model", text: m.text }));
+    const ctxQ = q + `\n[Context: $${amount.toLocaleString()} USD ISO, ${period.label} horizon]`;
+
+    let retryDelay = 0;
+
     try {
-      const h = chat.slice(-10).map(m => ({ role: (m.role === "user" ? "user" : "model") as "user" | "model", text: m.text }));
-      const a = await gemini(h, q + `\n[Context: $${amount.toLocaleString()} USD ISO, ${period.label} horizon]`, apiKey);
+      const a = await gemini(h, ctxQ, apiKey);
       setChat(c => [...c, { role: "ai", text: a }]);
     } catch (e: any) {
       const msg: string = e.message ?? "";
       const retryMatch = msg.match(/retry in ([\d.]+)s/i);
-      const friendly = msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")
-        ? `⏱ Free tier quota exceeded. Please wait ${retryMatch ? Math.ceil(Number(retryMatch[1])) + "s" : "a moment"} and try again, or use a key with higher limits.`
-        : msg.includes("API_KEY_INVALID") || msg.includes("400")
-        ? `🔑 Invalid API key. Click "Change key" below and enter a valid key from aistudio.google.com`
-        : `⚠️ ${msg}`;
-      setChat(c => [...c, { role: "ai", text: friendly }]);
-    } finally { setThinking(false); }
+      if (msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")) {
+        retryDelay = retryMatch ? Math.ceil(Number(retryMatch[1])) + 2 : 16;
+        setChat(c => [...c, { role: "ai", text: `⏱ Rate limited by free tier. Auto-retrying...` }]);
+        setRetryIn(retryDelay);
+        const iv = setInterval(() => setRetryIn(r => (r > 1 ? r - 1 : 0)), 1000);
+        setTimeout(() => clearInterval(iv), retryDelay * 1000 + 500);
+      } else {
+        setChat(c => [...c, { role: "ai", text:
+          msg.includes("API_KEY_INVALID") || msg.includes("400")
+            ? `🔑 Invalid API key. Click "Change key" below.`
+            : `⚠️ ${msg}`
+        }]);
+      }
+    } finally {
+      if (!retryDelay) setThinking(false);
+    }
+
+    if (retryDelay) {
+      setTimeout(async () => {
+        try {
+          const a = await gemini(h, ctxQ, apiKey);
+          setChat(c => { const copy = [...c]; copy[copy.length - 1] = { role: "ai", text: a }; return copy; });
+        } catch {
+          setChat(c => { const copy = [...c]; copy[copy.length - 1] = { role: "ai", text: `⚠️ Still rate limited. Please wait a moment and try again.` }; return copy; });
+        } finally {
+          setThinking(false);
+          setRetryIn(0);
+        }
+      }, retryDelay * 1000);
+    }
   };
 
   const TABS = [
@@ -522,7 +551,18 @@ export default function Calculator({ onClose }: { onClose: () => void }) {
                   </div>
                 ))}
 
-                {thinking && (
+                {thinking && retryIn > 0 && (
+                  <div className="flex gap-2.5">
+                    <div className="w-7 h-7 rounded-xl shrink-0 flex items-center justify-center" style={{ background: "rgba(13,148,136,0.1)", border: "1px solid rgba(13,148,136,0.2)" }}>
+                      <Sparkles className="w-3.5 h-3.5" style={{ color: "#0d9488" }} />
+                    </div>
+                    <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-black/60"
+                      style={{ border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+                      Retrying in <span className="font-bold tabular-nums" style={{ color: "#0d9488" }}>{retryIn}s</span>...
+                    </div>
+                  </div>
+                )}
+                {thinking && retryIn === 0 && (
                   <div className="flex gap-2.5">
                     <div className="w-7 h-7 rounded-xl shrink-0 flex items-center justify-center" style={{ background: "rgba(13,148,136,0.1)", border: "1px solid rgba(13,148,136,0.2)" }}>
                       <Sparkles className="w-3.5 h-3.5" style={{ color: "#0d9488" }} />
